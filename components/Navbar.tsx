@@ -15,14 +15,13 @@ export default function Navbar() {
         z-50
       "
     >
-      {/* LEFT — Brand */}
+
       <div className="flex items-center gap-2 font-bold text-xl">
         <Link href="/" className="text-black">
           Stockmaster
         </Link>
       </div>
 
-      {/* CENTER — Navigation */}
       <div className="flex gap-8 text-black/70 font-medium">
         <Link href="/" className="hover:text-black transition">
           Home
@@ -38,7 +37,7 @@ export default function Navbar() {
         </Link>
       </div>
 
-      {/* RIGHT — Buttons */}
+      
       <div className="flex gap-3">
         <Link href="/login">
           <button
