@@ -18,6 +18,8 @@ export async function POST(req: Request) {
     .from(users)
     .where(eq(users.email, email))
     .limit(1);
+  
+  
 
   // For security, don't reveal whether email exists.
   // But for hackathon it's okay to be explicit if you want.
