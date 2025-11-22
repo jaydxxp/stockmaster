@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${Instrument.variable} antialiased`}
       >
-        {/* ✅ Global background grid */}
+ 
         <div className="fixed inset-0 -z-10 pointer-events-none">
           <div
             className="h-full w-full"
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           ></div>
         </div>
 
-        {/* Your entire site */}
+    
         {children}
       </body>
     </html>

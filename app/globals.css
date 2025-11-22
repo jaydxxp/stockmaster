@@ -1,7 +1,4 @@
 @import "tailwindcss";
-
-
-
 .instrument {
   font-family: var(--instrument-serif), serif;
 }

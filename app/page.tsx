@@ -20,7 +20,7 @@ export default function Home() {
           errors,<br /> and keeps your business running smoothly.
         </p>
         <div className="flex gap-3">
-  {/* Get Started Button */}
+
   <Link href={"/login"} >
   <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full hover:bg-gray-900 transition">
     Get Started
@@ -38,7 +38,7 @@ export default function Home() {
   </button>
   </Link>
 
-  {/* Demo Button */}
+  
   <button className="flex items-center gap-2 bg-gray-100 text-black px-6 py-3 rounded-full hover:bg-gray-200 transition">
     Demo
     <svg
