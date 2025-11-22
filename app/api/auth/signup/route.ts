@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
   const { loginId, name, email, password } = parsed.data;
 
-  // Check loginId & email uniqueness
+  
   const existing = await db
     .select()
     .from(users)

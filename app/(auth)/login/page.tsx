@@ -3,17 +3,40 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function Login() {
   const router = useRouter();
-  const emailRef = useRef<HTMLInputElement | null>(null);
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    const res: any = await signIn("credentials", {
+      redirect: false,
+      loginId,
+      password,
+    });
+
+    setIsSubmitting(false);
+
+    if (res?.error) {
+      setError(res.error || "Invalid credentials");
+      return;
+    }
+
+    // success -> redirect to dashboard
+    router.push("/dashboard");
+  };
 
   const goToForgot = () => {
-    const emailValue = emailRef.current?.value || "";
-
-    
-    router.push(`/forgot-password?email=${encodeURIComponent(emailValue)}`);
+    router.push(`/forgot-password?email=${encodeURIComponent(loginId)}`);
   };
 
   return (
@@ -21,7 +44,6 @@ export default function Login() {
       <Navbar />
 
       <div className="flex min-h-[70vh] flex-col justify-center sm:mx-auto sm:w-full sm:max-w-sm">
-        
         <h2 className="text-center text-3xl font-bold tracking-tight text-black">
           Welcome Back
         </h2>
@@ -30,34 +52,24 @@ export default function Login() {
           Login to your account
         </p>
 
-        <form className="mt-10 space-y-6">
-      
+        <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="text-sm font-medium text-black">LoginID</label>
             <input
-              ref={emailRef}
-              id="email"
-              type="email"
-              className="
-                mt-2 block w-full rounded-xl 
-                border border-black/20 
-                bg-white px-4 py-2.5 
-                text-black text-sm
-                placeholder:text-gray-400 
-                focus:border-black
-              "
-              placeholder="you@example.com"
+              id="loginId"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              type="text"
+              className="mt-2 block w-full rounded-xl border border-black/20 bg-white px-4 py-2.5 text-black text-sm placeholder:text-gray-400 focus:border-black"
+              placeholder="your login id"
+              required
             />
           </div>
 
-         
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-black">
-                Password
-              </label>
+              <label className="text-sm font-medium text-black">Password</label>
 
-        
               <button
                 type="button"
                 onClick={goToForgot}
@@ -69,23 +81,23 @@ export default function Login() {
 
             <input
               id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               type="password"
-              className="
-                mt-2 block w-full rounded-xl 
-                border border-black/20 bg-white
-                px-4 py-2.5 text-black text-sm
-                placeholder:text-gray-400
-                focus:border-black
-              "
+              className="mt-2 block w-full rounded-xl border border-black/20 bg-white px-4 py-2.5 text-black text-sm placeholder:text-gray-400 focus:border-black"
               placeholder="••••••••"
+              required
             />
           </div>
 
+          {error && <div className="text-sm text-red-600">{error}</div>}
+
           <button
             type="submit"
-            className="w-full rounded-xl bg-black text-white py-2.5 text-sm font-semibold hover:bg-black/80 transition"
+            disabled={isSubmitting}
+            className="w-full rounded-xl bg-black text-white py-2.5 text-sm font-semibold hover:bg-black/80 transition disabled:opacity-60"
           >
-            Sign In
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
