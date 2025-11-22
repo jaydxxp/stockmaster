@@ -1,4 +1,4 @@
-// app/api/auth/signup/route.ts
+
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db, users } from "@/lib/db";
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    // fallback
+
     return NextResponse.json({ error: "User already exists" }, { status: 400 });
   }
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     name,
     email,
     passwordHash,
-    role: "STAFF", // or ADMIN for first user
+    role: "STAFF", 
   });
 
   return NextResponse.json({ success: true });

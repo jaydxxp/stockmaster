@@ -13,7 +13,7 @@ import {
   primaryKey,
 } from "drizzle-orm/pg-core";
 
-//ENUMS
+
 export const userRoleEnum = pgEnum("user_role", ["ADMIN", "STAFF"]);
 
 export const operationTypeEnum = pgEnum("operation_type", [
@@ -31,11 +31,11 @@ export const operationStatusEnum = pgEnum("operation_status", [
   "CANCELLED",
 ]);
 
-//USERS
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  loginId: varchar("login_id", { length: 50 }).notNull().unique(), // NEW
+  loginId: varchar("login_id", { length: 50 }).notNull().unique(), 
   name: varchar("name", { length: 120 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
@@ -54,8 +54,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   operations: many(operations, { relationName: "operationsCreatedByUser" }),
 }));
 
-//WAREHOUSES
-
 export const warehouses = pgTable("warehouses", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 150 }).notNull(),
@@ -73,15 +71,15 @@ export const warehousesRelations = relations(warehouses, ({ many }) => ({
   operationsTo: many(operations, { relationName: "operationsToWarehouse" }),
 }));
 
-//PRODUCTS
+
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   sku: varchar("sku", { length: 100 }).notNull().unique(),
   category: varchar("category", { length: 120 }),
-  unitOfMeasure: varchar("unit_of_measure", { length: 50 }).notNull(), // e.g. "pcs", "kg"
-  reorderLevel: integer("reorder_level").notNull().default(0), // for low-stock alerts
+  unitOfMeasure: varchar("unit_of_measure", { length: 50 }).notNull(), 
+  reorderLevel: integer("reorder_level").notNull().default(0), 
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -93,7 +91,7 @@ export const productsRelations = relations(products, ({ many }) => ({
   operationItems: many(operationItems),
 }));
 
-//STOCK LEVELS
+
 import { uniqueIndex } from "drizzle-orm/pg-core";
 
 export const stockLevels = pgTable(
@@ -129,15 +127,13 @@ export const stockLevelsRelations = relations(stockLevels, ({ one }) => ({
   }),
 }));
 
-//OPERATIONS
+
 export const operations = pgTable("operations", {
   id: serial("id").primaryKey(),
-  type: operationTypeEnum("type").notNull(), // RECEIPT | DELIVERY | TRANSFER | ADJUSTMENT
+  type: operationTypeEnum("type").notNull(), 
   status: operationStatusEnum("status").notNull().default("DRAFT"),
 
-  // For RECEIPT: toWarehouseId used
-  // For DELIVERY: fromWarehouseId used
-  // For TRANSFER: both used
+  
   fromWarehouseId: integer("from_warehouse_id").references(
     () => warehouses.id,
     { onDelete: "set null" }
@@ -150,7 +146,7 @@ export const operations = pgTable("operations", {
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
 
-  externalRef: varchar("external_ref", { length: 150 }), // supplier/customer ref, PO no., etc.
+  externalRef: varchar("external_ref", { length: 150 }), 
   notes: text("notes"),
 
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -180,7 +176,7 @@ export const operationsRelations = relations(operations, ({ one, many }) => ({
   items: many(operationItems),
 }));
 
-//OPERATION ITEMS
+
 export const operationItems = pgTable("operation_items", {
   id: serial("id").primaryKey(),
   operationId: integer("operation_id")

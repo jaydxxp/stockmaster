@@ -31,7 +31,7 @@ export default function Login() {
       return;
     }
 
-    // success -> redirect to dashboard
+
     router.push("/dashboard");
   };
 

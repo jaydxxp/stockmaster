@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import Link from "next/link";
 
@@ -23,24 +23,7 @@ type Location = {
 };
 
 export default function SettingsPage() {
-
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([
-    {
-      id: 1,
-      name: "Main Warehouse",
-      shortCode: "MW",
-      address: "123 Main St, City",
-      createdAt: "2025-01-01",
-    },
-    {
-      id: 2,
-      name: "Secondary Warehouse",
-      shortCode: "SW",
-      address: "456 Side Rd, City",
-      createdAt: "2025-02-15",
-    },
-  ]);
-
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([
     {
       id: 1,
@@ -50,7 +33,6 @@ export default function SettingsPage() {
       createdAt: "2025-03-01",
     },
   ]);
-
 
   const [wName, setWName] = useState("");
   const [wCode, setWCode] = useState("");
@@ -64,7 +46,9 @@ export default function SettingsPage() {
   const [editingWarehouseId, setEditingWarehouseId] = useState<number | null>(null);
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
 
- 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const nextWarehouseId = useMemo(
     () => (warehouses.length ? Math.max(...warehouses.map((w) => w.id)) + 1 : 1),
     [warehouses]
@@ -75,18 +59,83 @@ export default function SettingsPage() {
   );
 
 
+  useEffect(() => {
+    async function loadWarehouses() {
+      try {
+        const res = await fetch("/api/warehouse");
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const rows = await res.json();
+  
+        if (Array.isArray(rows) && rows.length) {
+          setWarehouses(
+            rows.map((r: any) => ({
+              id: Number(r.id),
+              name: r.name,
+              shortCode: r.code ?? r.shortCode ?? "",
+              address: r.location ?? r.address ?? "",
+              createdAt:
+                r.created_at ?? r.createdAt ?? new Date().toISOString().split("T")[0],
+            }))
+          );
+        } else {
+     
+          setWarehouses([
+            {
+              id: 1,
+              name: "Main Warehouse",
+              shortCode: "MW",
+              address: "123 Main St, City",
+              createdAt: "2025-01-01",
+            },
+            {
+              id: 2,
+              name: "Secondary Warehouse",
+              shortCode: "SW",
+              address: "456 Side Rd, City",
+              createdAt: "2025-02-15",
+            },
+          ]);
+        }
+      } catch (err) {
+   
+        console.error("Failed to load warehouses:", err);
+        setWarehouses([
+          {
+            id: 1,
+            name: "Main Warehouse",
+            shortCode: "MW",
+            address: "123 Main St, City",
+            createdAt: "2025-01-01",
+          },
+          {
+            id: 2,
+            name: "Secondary Warehouse",
+            shortCode: "SW",
+            address: "456 Side Rd, City",
+            createdAt: "2025-02-15",
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadWarehouses();
+  }, []);
+
+
   function handleAddOrUpdateWarehouse(e?: React.FormEvent) {
     e?.preventDefault();
 
     const trimmedCode = wCode.trim().toUpperCase();
     if (!wName.trim() || !trimmedCode) return alert("Please provide name and short code.");
 
-
     const duplicate = warehouses.find(
       (w) => w.shortCode === trimmedCode && w.id !== editingWarehouseId
     );
     if (duplicate) return alert("Short code already exists.");
 
+    
     if (editingWarehouseId) {
       setWarehouses((prev) =>
         prev.map((w) =>
@@ -94,22 +143,58 @@ export default function SettingsPage() {
         )
       );
       setEditingWarehouseId(null);
-    } else {
-      setWarehouses((prev) => [
-        ...prev,
-        {
-          id: nextWarehouseId,
-          name: wName.trim(),
-          shortCode: trimmedCode,
-          address: wAddress.trim(),
-          createdAt: new Date().toISOString().split("T")[0],
-        },
-      ]);
+      setWName("");
+      setWCode("");
+      setWAddress("");
+      return;
     }
 
-    setWName("");
-    setWCode("");
-    setWAddress("");
+   
+    (async () => {
+      setIsSubmitting(true);
+      try {
+        const payload = {
+          name: wName.trim(),
+          code: trimmedCode,
+        
+          location: wAddress.trim() || null,
+        };
+
+        const res = await fetch("/api/warehouse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error ?? `Request failed (${res.status})`);
+        }
+
+        const created = await res.json();
+     
+        const newWarehouse: Warehouse = {
+          id: Number(created.id ?? nextWarehouseId),
+          name: created.name ?? payload.name,
+          shortCode: created.code ?? payload.code,
+          address: created.location ?? payload.location ?? "",
+          createdAt:
+            created.created_at ??
+            created.createdAt ??
+            new Date().toISOString().split("T")[0],
+        };
+
+        setWarehouses((prev) => [...prev, newWarehouse]);
+        setWName("");
+        setWCode("");
+        setWAddress("");
+      } catch (err: any) {
+        console.error("Create warehouse failed:", err);
+        alert(err?.message ?? "Failed to create warehouse");
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   }
 
   function handleEditWarehouse(id: number) {
@@ -196,7 +281,10 @@ export default function SettingsPage() {
 
   return (
     <div className="pt-6 px-4">
-     
+      {isLoading ? (
+        <div className="mb-6">Loading warehouses...</div>
+      ) : null}
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Settings</h1>
@@ -266,10 +354,14 @@ export default function SettingsPage() {
               />
 
               <div className="mt-6 flex gap-3">
-                <button type="submit" className="px-4 py-2 rounded-lg bg-black text-white hover:bg-black/80 transition">
-                  {editingWarehouseId ? "Update Warehouse" : "Add Warehouse"}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-lg bg-black text-white hover:bg-black/80 transition disabled:opacity-60"
+                >
+                  {isSubmitting ? "Saving..." : editingWarehouseId ? "Update Warehouse" : "Add Warehouse"}
                 </button>
-
+ 
                 {editingWarehouseId && (
                   <button
                     type="button"

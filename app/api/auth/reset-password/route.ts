@@ -1,4 +1,4 @@
-// app/api/auth/reset-password/route.ts
+
 import { NextResponse } from "next/server";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Check OTP and expiry
+
   if (!user.resetOtpCode || !user.resetOtpExpiresAt) {
     return NextResponse.json({ error: "OTP not requested" }, { status: 400 });
   }
@@ -48,7 +48,6 @@ export async function POST(req: Request) {
 
   const newHash = await bcrypt.hash(newPassword, 10);
 
-  // Update password and clear OTP
   await db
     .update(users)
     .set({

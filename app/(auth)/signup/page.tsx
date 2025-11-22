@@ -36,7 +36,7 @@ export default function Signup() {
       });
 
       if (res.data?.success) {
-        // sign in via next-auth credentials provider (no redirect)
+       
         const signInRes: any = await signIn("credentials", {
           redirect: false,
           loginId,

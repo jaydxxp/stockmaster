@@ -1,105 +1,92 @@
- import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { db, operations, operationItems, warehouses, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { db, operations, operationItems, warehouses } from "@/lib/db";
-import { and, eq, sql } from "drizzle-orm";
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(req.url);
-//   const status = searchParams.get("status"); // optional filter
-  const warehouseId = searchParams.get("warehouseId");
-
-  const whereClauses = [eq(operations.type, "RECEIPT" as const)];
-
-//   if (status) {
+  try {
     
-//     whereClauses.push(eq(operations.status, status));
-//   }
-  if (warehouseId) {
-    whereClauses.push(eq(operations.toWarehouseId, Number(warehouseId)));
+    const rows = await db
+      .select({
+        id: operations.id,
+        type: operations.type,
+        status: operations.status,
+        fromWarehouseId: operations.fromWarehouseId,
+        toWarehouseId: operations.toWarehouseId,
+        createdByUserId: operations.createdByUserId,
+        externalRef: operations.externalRef,
+        notes: operations.notes,
+        createdAt: operations.createdAt,
+       
+        contact: users.name,
+      })
+      .from(operations)
+      .leftJoin(users, eq(users.id, operations.createdByUserId))
+      .where(eq(operations.type, "RECEIPT"));
+
+    return NextResponse.json(rows);
+  } catch (err: any) {
+    console.error("Fetch receipts error:", err);
+    return NextResponse.json({ error: err?.message ?? "Failed to fetch receipts" }, { status: 500 });
   }
-
-  const rows = await db
-    .select({
-      id: operations.id,
-      status: operations.status,
-      toWarehouseId: operations.toWarehouseId,
-      warehouseName: warehouses.name,
-      createdAt: operations.createdAt,
-      itemsCount: sql<number>`COUNT(${operationItems.id})`,
-    })
-    .from(operations)
-    .leftJoin(warehouses, eq(warehouses.id, operations.toWarehouseId))
-    .leftJoin(operationItems, eq(operationItems.operationId, operations.id))
-    .where(and(...whereClauses))
-    .groupBy(operations.id, warehouses.name)
-    .orderBy(sql`"created_at" DESC`);
-
-  return NextResponse.json(rows);
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const { toWarehouseId, items, notes } = body;
+    const body = await req.json();
+    const { toWarehouseId, items, notes } = body;
 
-  if (!toWarehouseId) {
-    return NextResponse.json(
-      { error: "toWarehouseId is required" },
-      { status: 400 }
-    );
-  }
+    if (!toWarehouseId || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json(
-      { error: "At least one item is required" },
-      { status: 400 }
-    );
-  }
+    const wh = await db
+      .select()
+      .from(warehouses)
+      .where(eq(warehouses.id, Number(toWarehouseId)))
+      .limit(1);
 
-  // Minimal validation of items
-  for (const item of items) {
-    if (!item.productId || !item.quantity || item.quantity <= 0) {
+    if (!wh || wh.length === 0) {
+      return NextResponse.json({ error: "Destination warehouse not found" }, { status: 400 });
+    }
+
+    const [op] = await db
+      .insert(operations)
+      .values({
+        type: "RECEIPT",
+        status: "DRAFT",
+        fromWarehouseId: null,
+        toWarehouseId: Number(toWarehouseId),
+        createdByUserId: Number(session.user?.id ?? null),
+        notes: notes ?? null,
+      })
+      .returning();
+
+   
+    for (const it of items) {
+      await db.insert(operationItems).values({
+        operationId: op.id,
+        productId: Number(it.productId),
+        quantity: Number(it.quantity),
+        notes: it.notes ?? null,
+      });
+    }
+
+    return NextResponse.json({ success: true, id: op.id }, { status: 201 });
+  } catch (err: any) {
+    console.error("Create receipt error:", err);
+
+  
+    if (err?.cause?.code === "23503" || err?.code === "23503") {
       return NextResponse.json(
-        { error: "Each item must have productId and positive quantity" },
+        { error: "Referenced record not found (foreign key violation)" },
         { status: 400 }
       );
     }
+
+    return NextResponse.json({ error: err?.message ?? "Internal Server Error" }, { status: 500 });
   }
-
-  // Create DRAFT receipt operation
-  const [op] = await db
-    .insert(operations)
-    .values({
-      type: "RECEIPT",
-      status: "DRAFT",
-      fromWarehouseId: null,
-      toWarehouseId,
-      createdByUserId: Number(session.user.id),
-      notes: notes ?? null,
-    })
-    .returning();
-
-    await db.insert(operationItems).values(
-      
-      items.map((item: any) => ({
-        operationId: op.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        notes: item.notes ?? null,
-      }))
-    );
-
-  return NextResponse.json(
-    { operationId: op.id, operation: op },
-    { status: 201 }
-  );
 }

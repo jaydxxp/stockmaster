@@ -1,4 +1,4 @@
-// lib/email.ts
+
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -8,7 +8,7 @@ export async function sendPasswordResetOtpEmail(opts: {
   otp: string;
 }) {
   if (!process.env.RESEND_API_KEY) {
-    // Fallback for demo: log to server console
+    
     console.log(`Password reset OTP for ${opts.email}: ${opts.otp}`);
     return;
   }

@@ -1,8 +1,8 @@
-// lib/stock.ts
+
 import { and, eq } from "drizzle-orm";
 import { db, stockLevels, operationItems, operations } from "@/lib/db";
 
-//Helper to get stock level
+
 
 export async function getStockLevel(opts: {
   productId: number;
@@ -49,7 +49,7 @@ export async function setStockLevel(opts: {
 export async function adjustStock(opts: {
   productId: number;
   warehouseId: number;
-  delta: number; // positive or negative
+  delta: number; 
 }) {
   const existing = await getStockLevel(opts);
   const currentQty = existing?.quantity ?? 0;

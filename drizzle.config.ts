@@ -1,4 +1,4 @@
-// drizzle.config.ts
+
 import type { Config } from "drizzle-kit";
 
 const dbUrl = process.env.DATABASE_URL;
@@ -11,7 +11,7 @@ export default {
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    // Use your Neon/Supabase connection string
+
     url: dbUrl,
   },
 } satisfies Config;

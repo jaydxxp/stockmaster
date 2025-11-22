@@ -1,4 +1,4 @@
-// app/api/dashboard/route.ts
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, products, stockLevels, operations } from "@/lib/db";
@@ -9,14 +9,14 @@ export async function GET() {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // total stock (sum of all quantities)
+  
   const [{ totalStock }] = await db
     .select({
       totalStock: sql<number>`COALESCE(SUM(${stockLevels.quantity}), 0)`,
     })
     .from(stockLevels);
 
-  // low stock count (products where total qty <= reorderLevel)
+ 
   const lowStockRows = await db
     .select({
       productId: products.id,
@@ -31,7 +31,6 @@ export async function GET() {
     (row) => row.totalQty <= row.reorderLevel && row.reorderLevel > 0
   ).length;
 
-  // pending receipts / deliveries / transfers
   const [pendingReceipts] = await db
     .select({
       count: sql<number>`COUNT(*)`,
@@ -53,7 +52,7 @@ export async function GET() {
     .from(operations)
     .where(and(eq(operations.type, "TRANSFER"), ne(operations.status, "DONE")));
 
-  // recent operations
+ 
   const recentOps = await db
     .select({
       id: operations.id,

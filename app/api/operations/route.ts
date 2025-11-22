@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Very basic business validation (you can expand later)
+
   if (type === "RECEIPT" && !toWarehouseId) {
     return NextResponse.json(
       { error: "Receipt requires toWarehouseId" },

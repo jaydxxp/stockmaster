@@ -1,4 +1,4 @@
-// lib/auth.ts
+
 import NextAuth, { type DefaultSession } from "next-auth";
 import   {JWT}  from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
@@ -12,6 +12,8 @@ declare module "next-auth" {
     role: string;
     email: string;
     name: string;
+    
+    loginId?: string;
   }
 
   interface Session {
@@ -20,6 +22,8 @@ declare module "next-auth" {
       role: string;
       email: string;
       name: string;
+      
+      loginId?: string;
     };
   }
 }
@@ -28,6 +32,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
+
+    loginId?: string;
   }
 }
 
@@ -84,7 +90,7 @@ export const {
   ],
   pages: {
     signIn: "/login",
-    error: "/login", // Redirect to login on error
+    error: "/login", 
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -104,7 +110,7 @@ export const {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60, 
   },
   secret: process.env.AUTH_SECRET,
   debug: process.env.NODE_ENV === "development",

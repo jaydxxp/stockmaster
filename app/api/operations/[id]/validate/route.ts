@@ -1,4 +1,4 @@
-// app/api/operations/[id]/validate/route.ts
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { applyOperation } from "@/lib/stock";

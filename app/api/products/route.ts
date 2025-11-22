@@ -1,4 +1,4 @@
-// app/api/products/route.ts
+
 import { NextResponse } from "next/server";
 import { db, products, stockLevels } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -9,7 +9,6 @@ export async function GET() {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Get products with total stock (sum over all warehouses)
   const rows = await db
     .select({
       id: products.id,
