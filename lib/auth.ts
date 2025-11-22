@@ -53,7 +53,7 @@ export const {
           const [user] = await db
             .select()
             .from(users)
-            .where(eq(users.email, credentials.loginId as string))
+            .where(eq(users.loginId, credentials.loginId as string))
             .limit(1);
 
           if (!user) {
