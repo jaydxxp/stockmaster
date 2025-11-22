@@ -112,6 +112,7 @@ export default function ForgotPassword() {
 
             <div className="mt-10 flex justify-between gap-3">
               {[0, 1, 2, 3].map((i) => (
+                
                 <input
                   key={i}
                   maxLength={1}
