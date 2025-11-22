@@ -1,6 +1,6 @@
 // lib/auth.ts
 import NextAuth, { type DefaultSession } from "next-auth";
-import type { JWT } from "next-auth/jwt";
+import   {JWT}  from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
